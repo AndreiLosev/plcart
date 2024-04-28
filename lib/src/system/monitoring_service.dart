@@ -1,12 +1,10 @@
-import 'dart:async';
-
 import 'package:plcart/src/config.dart';
 import 'package:plcart/src/contracts/property_handlers.dart';
-import 'package:plcart/src/contracts/task.dart';
+import 'package:plcart/src/system/event_queue.dart';
 
 class MonitoringService {
   final double _doubleDiff;
-  final StreamController<Event> _eventQueue;
+  final EventQueue _eventQueue;
 
   MonitoringService(Config config, this._eventQueue)
       : _doubleDiff = config.doubleDiff;

@@ -14,7 +14,7 @@ class HiveErrorLogService implements IErrorLogger {
 
   @override
   Future<void> init() async {
-    _init.init();
+    await _init.init();
     _box = await Hive.openBox("errorLog");
   }
 

@@ -51,7 +51,6 @@ class Builder {
   }
 
   Future<Runtime> build() async {
-    _container.commit();
     _builSystem();
     _buildTasks();
     await _initSystemService();
@@ -122,24 +121,31 @@ class Builder {
   }
 
   void _builSystem() {
+
+    bool useHive = false;
+
     if (!_container.isAdded<Config>()) {
       _container.addSingleton(Config.new);
     }
     if (!_container.isAdded<IReatainService>()) {
+      useHive = true;
       _container.addSingleton<IReatainService>(HiveRetainService.new);
     }
 
     if (!_container.isAdded<IErrorLogger>()) {
-      _container.addSingleton(HiveErrorLogService.new);
+      useHive = true;
+      _container.addSingleton<IErrorLogger>(HiveErrorLogService.new);
     }
 
     _container.addSingleton(MonitoringService.new);
     _container.addSingleton(EventQueue.new);
+    _container.addSingleton(RetainHandler.new);
 
-    if (_container.get<IReatainService>() is HiveRetainService ||
-        _container.get<IErrorLogger>() is HiveErrorLogService) {
+    if (useHive) {
       _container.addSingleton(HiveInit.new);
     }
+
+    _container.commit();
   }
 
   Future<void> _initSystemService() async {
