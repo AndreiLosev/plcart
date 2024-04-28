@@ -15,7 +15,7 @@ class HiveRetainService implements IReatainService {
   @override
   Future<void> init() async {
     await _init.init();
-    _box = await Hive.openBox('retain');
+    _box = await Hive.openBox('system_$runtimeType');
   }
 
   @override
