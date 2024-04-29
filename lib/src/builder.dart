@@ -10,6 +10,7 @@ import 'package:plcart/src/system/hive_error_log_service.dart';
 import 'package:plcart/src/system/hive_init.dart';
 import 'package:plcart/src/system/hive_retain_service.dart';
 import 'package:plcart/src/system/monitoring_service.dart';
+import 'package:plcart/src/system/send_event.dart';
 
 class Builder {
   final _container = AutoInjector();
@@ -105,13 +106,13 @@ class Builder {
           _periodicTask.add((task, retain, monitor));
         case EventTask():
           for (var event in task.eventSubscriptions) {
-            if (_eventTask[event.runtimeType.toString()] == null) {
-              _eventTask[event.runtimeType.toString()] = [
+            if (_eventTask[event.toString()] == null) {
+              _eventTask[event.toString()] = [
                 (task, retain, monitor)
               ];
               continue;
             }
-            _eventTask[event.runtimeType.toString()]!
+            _eventTask[event.toString()]!
                 .add((task, retain, monitor));
           }
         default:
@@ -140,6 +141,7 @@ class Builder {
     _container.addSingleton(MonitoringService.new);
     _container.addSingleton(EventQueue.new);
     _container.addSingleton(RetainHandler.new);
+    _container.addSingleton(SendEvent.new);
 
     if (useHive) {
       _container.addSingleton(HiveInit.new);

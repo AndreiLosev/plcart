@@ -14,7 +14,7 @@ class MonitoringService {
   void init(Iterable<IMonitoringProperty> taskAndStorages) {
     for (var taskOrStorage in taskAndStorages) {
       final key = taskOrStorage.runtimeType.toString();
-      if (_oldValues[key] != null) {
+      if (_oldValues[key] == null) {
         _oldValues[key] = taskOrStorage.getValues();
       }
     }

@@ -24,7 +24,7 @@ class HiveErrorLogService implements IErrorLogger {
       _box.deleteAt(_box.keys.first);
     }
 
-    _box.add({'e': e, 's': s, 't': DateTime.now()});
+    _box.add({'e': e.toString(), 's': s.toString(), 't': DateTime.now().toString()});
     
     return Future.value();
   }

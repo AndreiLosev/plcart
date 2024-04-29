@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:plcart/src/contracts/task.dart';
 
 class EventQueue {
-  final _queue = StreamController<Event>();
+  final _queue = StreamController<Event>.broadcast();
 
   void add(Event event) {
     if (_queue.isClosed) {

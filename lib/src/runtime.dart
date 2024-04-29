@@ -44,7 +44,7 @@ class Runtime {
         }
       }));
     }
-
+  
     _injector.get<EventQueue>().listen((e) {
       final item = _eventTask[e.runtimeType.toString()];
       if (item == null) {
