@@ -12,10 +12,10 @@ abstract interface class IMonitoringProperty {
 }
 
 abstract interface class INetworkSubscriber {
-  Set<String> getTopicSubscriptions();
+  Set<String> getTopics();
   void setNetworkProperty(String topic,  Uint8List value);
 }
 
 abstract interface class INetworkPublisher {
-  Map<String, Uint8List> getPeriodicallyPublishedValues();
+  Map<String, Uint8List> getPublishedValues();
 }

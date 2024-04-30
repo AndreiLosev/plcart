@@ -25,7 +25,7 @@ class Runtime {
   final Map<String, List<EventTaskWhithDep>> _eventTask;
   final AutoInjector _injector;
 
-  final _timers = [];
+  final _timers = <Timer>[];
 
   Runtime(this._eventTask, this._periodicTask, this._injector);
 
@@ -61,5 +61,12 @@ class Runtime {
         }
       }
     });
+  }
+
+  void stop() {
+    _injector.get<EventQueue>().close();
+    for (var t in _timers) {
+      t.cancel();
+    }
   }
 }
