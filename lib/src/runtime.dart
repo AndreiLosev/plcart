@@ -69,4 +69,8 @@ class Runtime {
       t.cancel();
     }
   }
+
+  T get<T>() {
+    return _injector.get<T>();
+  }
 }

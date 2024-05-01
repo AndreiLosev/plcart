@@ -143,7 +143,7 @@ class Builder {
     _container.addSingleton(RetainHandler.new);
     _container.addSingleton(SendEvent.new);
 
-    if (useHive) {
+    if (useHive && !_container.isAdded<HiveInit>()) {
       _container.addSingleton(HiveInit.new);
     }
 
