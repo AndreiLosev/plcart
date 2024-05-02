@@ -21,3 +21,5 @@ abstract interface class INetworkService {
   void publication(String topic, Uint8List buffer);
   bool isConnected();
 }
+
+abstract interface class INetworkConfig {}

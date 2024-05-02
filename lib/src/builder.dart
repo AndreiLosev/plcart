@@ -3,14 +3,18 @@ import 'package:plcart/src/config.dart';
 import 'package:plcart/src/contracts/property_handlers.dart';
 import 'package:plcart/src/contracts/services.dart';
 import 'package:plcart/src/contracts/task.dart';
+import 'package:plcart/src/network_config.dart';
 import 'package:plcart/src/runtime.dart';
+import 'package:plcart/src/runtime_fields/network_handler.dart';
 import 'package:plcart/src/runtime_fields/retain_handler.dart';
 import 'package:plcart/src/system/event_queue.dart';
 import 'package:plcart/src/system/hive_error_log_service.dart';
 import 'package:plcart/src/system/hive_init.dart';
 import 'package:plcart/src/system/hive_retain_service.dart';
 import 'package:plcart/src/system/monitoring_service.dart';
+import 'package:plcart/src/system/mqtt311.dart';
 import 'package:plcart/src/system/send_event.dart';
+import 'package:plcart/src/system/tasks/send_network_message.dart';
 
 class Builder {
   final _container = AutoInjector();
@@ -101,19 +105,24 @@ class Builder {
       final monitor =
           [task, ...storages].whereType<IMonitoringProperty>().toSet();
 
+      final subscribers =
+          [task, ...storages].whereType<INetworkSubscriber>().toSet();
+      final publishers =
+          [task, ...storages].whereType<INetworkPublisher>().toSet();
+
       switch (task) {
         case PeriodicTask():
-          _periodicTask.add((task, retain, monitor));
+          _periodicTask.add((task, retain, monitor, subscribers, publishers));
         case EventTask():
           for (var event in task.eventSubscriptions) {
             if (_eventTask[event.toString()] == null) {
               _eventTask[event.toString()] = [
-                (task, retain, monitor)
+                (task, retain, monitor, subscribers, publishers)
               ];
               continue;
             }
             _eventTask[event.toString()]!
-                .add((task, retain, monitor));
+                .add((task, retain, monitor, subscribers, publishers));
           }
         default:
           throw Exception("undefinet task tipe ${task.runtimeType}");
@@ -122,15 +131,23 @@ class Builder {
   }
 
   void _builSystem() {
-
     bool useHive = false;
 
     if (!_container.isAdded<Config>()) {
       _container.addSingleton(Config.new);
     }
+
+    if (!_container.isAdded<INetworkConfig>()) {
+      _container.addSingleton<INetworkConfig>(MqttConfig.new);
+    }
+
     if (!_container.isAdded<IReatainService>()) {
       useHive = true;
       _container.addSingleton<IReatainService>(HiveRetainService.new);
+    }
+
+    if (!_container.isAdded<INetworkConfig>()) {
+      _container.addSingleton(MqttConfig.new);
     }
 
     if (!_container.isAdded<IErrorLogger>()) {
@@ -138,14 +155,21 @@ class Builder {
       _container.addSingleton<IErrorLogger>(HiveErrorLogService.new);
     }
 
+    if (!_container.isAdded<INetworkService>()) {
+      _container.addSingleton<INetworkService>(Mqtt311.new);
+    }
+
     _container.addSingleton(MonitoringService.new);
     _container.addSingleton(EventQueue.new);
     _container.addSingleton(RetainHandler.new);
+    _container.addSingleton(NetworkHandler.new);
     _container.addSingleton(SendEvent.new);
 
     if (useHive && !_container.isAdded<HiveInit>()) {
       _container.addSingleton(HiveInit.new);
     }
+
+    registerTask(PublishTask.new);
 
     _container.commit();
   }

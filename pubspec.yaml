@@ -13,7 +13,9 @@ dependencies:
       url: git@github.com:AndreiLosev/auto_injector.git
       ref: get_by_className
   hive: ^2.2.3
+  mqtt_client: ^10.2.1
   path: ^1.8.0
+  typed_data: ^1.3.2
 
 dev_dependencies:
   lints: ^3.0.0
