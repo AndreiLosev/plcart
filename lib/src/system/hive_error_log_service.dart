@@ -8,9 +8,9 @@ class HiveErrorLogService implements IErrorLogger {
   final int _logLength;
   late final Box _box;
 
-  HiveErrorLogService(HiveInit init, Config config):
-    _logLength = config.errorLogLength,
-    _init = init;
+  HiveErrorLogService(HiveInit init, Config config)
+      : _logLength = config.errorLogLength,
+        _init = init;
 
   @override
   Future<void> init() async {
@@ -20,12 +20,25 @@ class HiveErrorLogService implements IErrorLogger {
 
   @override
   Future<void> log(Object e, StackTrace s, [bool isFatal = false]) {
-    if (_box.length >= _logLength) {
-      _box.deleteAt(_box.keys.first);
-    }
+    try {
+      if (_box.length >= _logLength) {
+        _box.deleteAt(_box.keys.first);
+      }
 
-    _box.add({'e': e.toString(), 's': s.toString(), 't': DateTime.now().toString()});
-    
+      _box.add({
+        'e': e.toString(),
+        's': s.toString(),
+        't': DateTime.now().toString()
+      });
+    } catch (e) {
+      print("error loger: $e");
+    }
+    return Future.value();
+  }
+
+  @override
+  Future<void> close() {
+    _box.close();
     return Future.value();
   }
 }

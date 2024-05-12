@@ -8,9 +8,9 @@ class HiveRetainService implements IReatainService {
   final double _doubleDiff;
   late final Box _box;
 
-  HiveRetainService(Config config, HiveInit init):
-    _init = init,
-    _doubleDiff = config.doubleDiff;
+  HiveRetainService(Config config, HiveInit init)
+      : _init = init,
+        _doubleDiff = config.doubleDiff;
 
   @override
   Future<void> init() async {
@@ -34,7 +34,7 @@ class HiveRetainService implements IReatainService {
   @override
   Future<void> update(String name, Object value) {
     if (value is double) {
-      final double diff = _box.get(name) - value; 
+      final double diff = _box.get(name) - value;
 
       if (diff.abs() > _doubleDiff) {
         _box.put(name, value);
@@ -47,6 +47,12 @@ class HiveRetainService implements IReatainService {
       _box.put(name, value);
     }
 
+    return Future.value();
+  }
+
+  @override
+  Future<void> close() {
+    _box.close();
     return Future.value();
   }
 }

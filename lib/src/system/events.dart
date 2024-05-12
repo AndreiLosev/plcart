@@ -4,7 +4,7 @@ import 'package:plcart/plcart.dart';
 
 class PublishEvent extends Event {
   final String topic;
-  final Uint8List value;
+  final ByteData value;
 
   PublishEvent(this.topic, this.value);
 }

@@ -24,6 +24,7 @@ class Builder {
 
   final _periodicTask = <PeriodicTaskWithDep>[];
   final _eventTask = <String, List<EventTaskWhithDep>>{};
+  final _allNetworkSabscribers = <INetworkSubscriber>{};
 
   void registerTask(Function taskConstructor) {
     final stringConstructor = taskConstructor.runtimeType.toString();
@@ -59,7 +60,7 @@ class Builder {
     _builSystem();
     _buildTasks();
     await _initSystemService();
-    return Runtime(_eventTask, _periodicTask, _container);
+    return Runtime(_container, _eventTask, _periodicTask, _allNetworkSabscribers);
   }
 
   void _buildTasks() {
@@ -107,22 +108,25 @@ class Builder {
 
       final subscribers =
           [task, ...storages].whereType<INetworkSubscriber>().toSet();
+
+      _allNetworkSabscribers.addAll(subscribers);
+
       final publishers =
           [task, ...storages].whereType<INetworkPublisher>().toSet();
 
       switch (task) {
         case PeriodicTask():
-          _periodicTask.add((task, retain, monitor, subscribers, publishers));
+          _periodicTask.add((task, retain, monitor, publishers));
         case EventTask():
           for (var event in task.eventSubscriptions) {
             if (_eventTask[event.toString()] == null) {
               _eventTask[event.toString()] = [
-                (task, retain, monitor, subscribers, publishers)
+                (task, retain, monitor, publishers)
               ];
               continue;
             }
             _eventTask[event.toString()]!
-                .add((task, retain, monitor, subscribers, publishers));
+                .add((task, retain, monitor, publishers));
           }
         default:
           throw Exception("undefinet task tipe ${task.runtimeType}");

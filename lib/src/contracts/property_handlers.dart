@@ -13,9 +13,9 @@ abstract interface class IMonitoringProperty {
 
 abstract interface class INetworkSubscriber {
   Set<String> getTopics();
-  void setNetworkProperty(String topic,  Uint8List value);
+  void setNetworkProperty(String topic,  ByteData value);
 }
 
 abstract interface class INetworkPublisher {
-  Map<String, Uint8List> getPublishedValues();
+  Map<String, ByteData> getPublishedValues();
 }

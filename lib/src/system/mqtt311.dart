@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:mqtt_client/mqtt_client.dart';
@@ -9,10 +10,8 @@ import 'package:typed_data/typed_data.dart';
 class Mqtt311 implements INetworkService {
   final MqttConfig _config;
   late final MqttServerClient _client;
-  final IErrorLogger _errorLogger;
-  bool run = false;
 
-  Mqtt311(Config config, this._errorLogger)
+  Mqtt311(Config config)
       : _config = config.networkCOnfig as MqttConfig {
     _client = MqttServerClient.withPort(
       _config.host,
@@ -23,22 +22,16 @@ class Mqtt311 implements INetworkService {
 
   @override
   Future<void> connect() async {
-    run = true;
     _client
       ..logging(on: _config.log)
       ..setProtocolV311()
       ..keepAlivePeriod = _config.keepAlivePeriod.inSeconds
       ..connectTimeoutPeriod = _config.connectTimeoutPeriod.inMilliseconds
-      ..autoReconnect = _config.autoReconnect
+      ..autoReconnect = false
       ..connectionMessage = _getConnectMessage();
 
-    while (run && !isConnected()) {
-      try {
-        await _client.connect(_config.userName, _config.password);
-      } catch (e, s) {
-        _errorLogger.log(e, s);
-      }
-    }
+    _client.disconnect();
+    await _client.connect(_config.userName, _config.password);
   }
 
   @override
@@ -48,17 +41,16 @@ class Mqtt311 implements INetworkService {
 
   @override
   Future<void> disconnect() {
-    _client.disconnect();
-    run = false;
+    _client.disconnect();  
     return Future.value();
   }
 
   @override
-  void listen(void Function(String topic, Uint8List buffer) onData) {
+  void listen(void Function(String topic, ByteData buffer) onData) {
     _client.updates!.listen((e) {
       final topic = e.first.topic;
       final value = (e.first.payload as MqttPublishMessage).payload.message;
-      onData(topic, Uint8List.fromList(value.toList()));
+      onData(topic, ByteData.view(value.buffer));
     });
   }
 
@@ -68,11 +60,11 @@ class Mqtt311 implements INetworkService {
   }
 
   @override
-  void publication(String topic, Uint8List buffer) {
+  void publication(String topic, ByteData buffer) {
     _client.publishMessage(
       topic,
       _config.publicationQot,
-      Uint8Buffer()..addAll(buffer),
+      Uint8Buffer()..addAll(buffer.buffer.asUint8List()),
       retain: _config.publicationRetain.contains(topic),
     );
   }

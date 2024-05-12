@@ -1,17 +1,50 @@
+import 'dart:async';
+
 import 'package:plcart/plcart.dart';
+import 'package:plcart/src/helpers/periodic_timer.dart';
 
 class NetworkHandler {
   final INetworkService _service;
   final _taskTopics = <String, Set<INetworkSubscriber>>{};
   final IErrorLogger _errorLogger;
+  bool _run = false;
+  late Timer _coonectionTimer;
+  final _reConnectQueue = StreamController<bool>();
+  final Duration _reconnectTimeout = Duration(seconds: 5);
+  bool _connectionLock = false;
 
-  NetworkHandler(this._service, this._errorLogger, );
+  NetworkHandler(
+    this._service,
+    this._errorLogger,
+  );
 
-  Future<void> connect() async {
-    await _service.connect();
+  Future<void> run(Iterable<INetworkSubscriber> taskAndStorages) async {
+    _run = true;
+
+    _reConnectQueue.stream.listen((_) async {
+      if (_connectionLock) {
+        return;
+      }
+      _connectionLock = true;
+      await _connect(taskAndStorages);
+      _connectionLock = false;
+    });
+
+    _reConnectQueue.add(true);
+
+    _coonectionTimer = PeriodicTimer(_reconnectTimeout, (_) async {
+      if (_service.isConnected() || !_run) {
+        return;
+      }
+
+      _reConnectQueue.add(true);
+    });
   }
 
-  Future<void> disconnect() async {
+  Future<void> stop() async {
+    _run = false;
+    _coonectionTimer.cancel();
+    _reConnectQueue.close();
     await _service.disconnect();
   }
 
@@ -22,13 +55,15 @@ class NetworkHandler {
           _service.publication(item.key, item.value);
         } catch (e, s) {
           _errorLogger.log(e, s);
+          if (!_service.isConnected()) {
+            _reConnectQueue.add(true);
+          }
         }
       }
     }
   }
 
-  Future<void> subscribe(Iterable<INetworkSubscriber> taskAndStorages) async {
-    await _pendingConnection();
+  Future<void> _subscribe(Iterable<INetworkSubscriber> taskAndStorages) async {
     for (var taskOrStorage in taskAndStorages) {
       for (var topic in taskOrStorage.getTopics()) {
         _addtaskToTopic(topic, taskOrStorage);
@@ -41,8 +76,7 @@ class NetworkHandler {
     }
   }
 
-  Future<void> listen() async {
-    await _pendingConnection();
+  Future<void> _listen() async {
     _service.listen((topic, buffer) {
       final taskAndStorages = _matchTopic(topic);
       for (var taskOrStorage in taskAndStorages) {
@@ -56,12 +90,6 @@ class NetworkHandler {
       _taskTopics[topic] = {taskOrStorage};
     } else {
       _taskTopics[topic]!.add(taskOrStorage);
-    }
-  }
-
-  Future<void> _pendingConnection() async {
-    while (!_service.isConnected()) {
-      await Future.delayed(Duration(seconds: 1));
     }
   }
 
@@ -83,5 +111,15 @@ class NetworkHandler {
         .first;
 
     return _taskTopics[regexTopics]!;
+  }
+
+  Future<void> _connect(Iterable<INetworkSubscriber> taskAndStorages) async {
+    try {
+      await _service.connect();
+      await _subscribe(taskAndStorages);
+      _listen();
+    } catch (e, s) {
+      _errorLogger.log(e, s);
+    }
   }
 }
