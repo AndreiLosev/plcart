@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:debug_server_utils/debug_server_utils.dart';
+import 'package:future_soket/future_soket.dart';
 import 'package:plcart/src/helpers/debug.dart';
 import 'package:plcart/src/system/event_queue.dart';
 
@@ -12,35 +12,40 @@ class CommandHandler {
   final Map<String, Function> _registeredEvents;
   final Map<String, Object> _registeredTasks;
   final EventQueue _eventQueue;
-  final Socket _socket;
+  final FutureSoket _socket;
 
-  CommandHandler(this._socket, this._registeredTasks, this._registeredEvents,
-      this._eventQueue);
+  CommandHandler(
+    Socket soket,
+    this._registeredTasks,
+    this._registeredEvents,
+    this._eventQueue,
+  ) : _socket = FutureSoket.fromSoket(soket);
 
-  void listen() {
-    _socket.listen((Uint8List data) {
+  Future<void> listen() async {
+    while (_socket.isConnected()) {
+      final (type, payload) = await readPacket(_socket);
       late final ServerResponse response;
       try {
-        final command = parseClientCommand(data);
-        response = switch (command.kind) {
-          CommandKind.getRegisteredEvents => _getRegisteredTasks(),
-          CommandKind.getRegisteredTasks => _getRegisteredEvents(),
-          CommandKind.runEvent => _runEvent(command.payload),
+        response = switch (type.toCommandKind()) {
+          CommandKind.getRegisteredEvents => _getRegisteredEvents(),
+          CommandKind.getRegisteredTasks => _getRegisteredTasks(),
+          CommandKind.runEvent => _runEvent(RunEventPayload.fromMap(payload)),
           CommandKind.subscribeTask =>
-            _subscribeTask(command.payload, _timer, _subscriptions),
+            _subscribeTask(payload, _timer, _subscriptions),
           CommandKind.unsubscribeTask =>
-            _unsubscribeTask(command.payload, _timer, _subscriptions),
-          CommandKind.setTaskValue => _setTaskValue(command.payload),
+            _unsubscribeTask(payload, _timer, _subscriptions),
+          CommandKind.setTaskValue =>
+            _setTaskValue(SetTaskValuePayload(payload)),
         };
       } catch (e) {
         response = ServerResponse(
           ResponseStatus.internalError,
-          {"message": e},
+          {"message": e.toString()},
         );
       } finally {
-        _socket.add(response.toBytes());
+        writePacket(_socket, response.responseStatus.code(), response.message);
       }
-    });
+    }
   }
 
   ServerResponse _getRegisteredEvents() {
@@ -63,7 +68,8 @@ class CommandHandler {
     _eventQueue.add(Function.apply(
       eventContructor,
       payload.positionArguments,
-      payload.namedArguments,
+      Map.fromEntries(payload.namedArguments.entries
+          .map((i) => MapEntry(Symbol(i.key), i.value))),
     ));
     return ServerResponse.ok();
   }
@@ -147,7 +153,9 @@ class CommandHandler {
         message[task.runtimeType.toString()] = task.debug();
       }
 
-      _socket.add(ServerResponse.ok(message).toBytes());
+      final packet = ServerResponse.ok(message);
+
+      writePacket(_socket, packet.responseStatus.code(), packet.message);
     });
   }
 

@@ -7,6 +7,7 @@ import 'package:plcart/src/network_config.dart';
 import 'package:plcart/src/runtime.dart';
 import 'package:plcart/src/runtime_fields/network_handler.dart';
 import 'package:plcart/src/runtime_fields/retain_handler.dart';
+import 'package:plcart/src/system/command_server/com_server.dart';
 import 'package:plcart/src/system/event_queue.dart';
 import 'package:plcart/src/system/hive_error_log_service.dart';
 import 'package:plcart/src/system/hive_init.dart';
@@ -17,10 +18,12 @@ import 'package:plcart/src/system/send_event.dart';
 import 'package:plcart/src/system/tasks/send_network_message.dart';
 
 class Builder {
-  final _container = AutoInjector();
+  final _injector = AutoInjector();
 
   final _tasks = <String, List<String>>{};
   final _storage = <String, List<String>>{};
+
+  final _eventsForDebug = <String, Function>{};
 
   final _periodicTask = <PeriodicTaskWithDep>[];
   final _eventTask = <String, List<EventTaskWhithDep>>{};
@@ -32,7 +35,7 @@ class Builder {
     final classString = stringConstructor.split(' => ').last;
     final params = _extractParams(stringConstructor);
     _tasks[classString] = params;
-    _container.addSingleton(taskConstructor);
+    _injector.addSingleton(taskConstructor);
   }
 
   void registerStorage(Function storageConstructor) {
@@ -41,26 +44,39 @@ class Builder {
     final classString = stringConstructor.split(' => ').last;
     final params = _extractParams(stringConstructor);
     _storage[classString] = params;
-    _container.addSingleton(storageConstructor);
+    _injector.addSingleton(storageConstructor);
+  }
+
+  void registerDebugEvent(Function eventConstructor) {
+    final stringConstructor = eventConstructor.runtimeType.toString();
+
+    final classString = stringConstructor.split(' => ').last;
+    _eventsForDebug[classString] = eventConstructor;
   }
 
   void registerFactory<T>(Function constructor) {
-    _container.add<T>(constructor);
+    _injector.add<T>(constructor);
   }
 
   void registerSingleton<T>(Function constructor) {
-    _container.addSingleton<T>(constructor);
+    _injector.addSingleton<T>(constructor);
   }
 
   void registerInstance<T>(T instance) {
-    _container.addInstance(instance);
+    _injector.addInstance(instance);
   }
 
   Future<Runtime> build() async {
     _builSystem();
     _buildTasks();
     await _initSystemService();
-    return Runtime(_container, _eventTask, _periodicTask, _allNetworkSabscribers);
+    return Runtime(
+      _injector,
+      _eventTask,
+      _periodicTask,
+      _allNetworkSabscribers,
+      _createComServer(),
+    );
   }
 
   void _buildTasks() {
@@ -98,9 +114,9 @@ class Builder {
     }
 
     for (var item in tasksWithDepStorages.entries) {
-      final task = _container.get(className: item.key);
+      final task = _injector.get(className: item.key);
       final storages =
-          item.value.map((e) => _container.get(className: e)).toList();
+          item.value.map((e) => _injector.get(className: e)).toList();
 
       final retain = [task, ...storages].whereType<IRetainProperty>().toSet();
       final monitor =
@@ -137,62 +153,73 @@ class Builder {
   void _builSystem() {
     bool useHive = false;
 
-    if (!_container.isAdded<Config>()) {
-      _container.addSingleton(Config.new);
+    if (!_injector.isAdded<Config>()) {
+      _injector.addSingleton(Config.new);
     }
 
-    if (!_container.isAdded<INetworkConfig>()) {
-      _container.addSingleton<INetworkConfig>(MqttConfig.new);
+    if (!_injector.isAdded<INetworkConfig>()) {
+      _injector.addSingleton<INetworkConfig>(MqttConfig.new);
     }
 
-    if (!_container.isAdded<IReatainService>()) {
+    if (!_injector.isAdded<IReatainService>()) {
       useHive = true;
-      _container.addSingleton<IReatainService>(HiveRetainService.new);
+      _injector.addSingleton<IReatainService>(HiveRetainService.new);
     }
 
-    if (!_container.isAdded<INetworkConfig>()) {
-      _container.addSingleton(MqttConfig.new);
+    if (!_injector.isAdded<INetworkConfig>()) {
+      _injector.addSingleton(MqttConfig.new);
     }
 
-    if (!_container.isAdded<IErrorLogger>()) {
+    if (!_injector.isAdded<IErrorLogger>()) {
       useHive = true;
-      _container.addSingleton<IErrorLogger>(HiveErrorLogService.new);
+      _injector.addSingleton<IErrorLogger>(HiveErrorLogService.new);
     }
 
-    if (!_container.isAdded<INetworkService>()) {
-      _container.addSingleton<INetworkService>(Mqtt311.new);
+    if (!_injector.isAdded<INetworkService>()) {
+      _injector.addSingleton<INetworkService>(Mqtt311.new);
     }
 
-    _container.addSingleton(MonitoringService.new);
-    _container.addSingleton(EventQueue.new);
-    _container.addSingleton(RetainHandler.new);
-    _container.addSingleton(NetworkHandler.new);
-    _container.addSingleton(SendEvent.new);
+    _injector.addSingleton(MonitoringService.new);
+    _injector.addSingleton(EventQueue.new);
+    _injector.addSingleton(RetainHandler.new);
+    _injector.addSingleton(NetworkHandler.new);
+    _injector.addSingleton(SendEvent.new);
 
-    if (useHive && !_container.isAdded<HiveInit>()) {
-      _container.addSingleton(HiveInit.new);
+    if (useHive && !_injector.isAdded<HiveInit>()) {
+      _injector.addSingleton(HiveInit.new);
     }
 
     registerTask(PublishTask.new);
 
-    _container.commit();
+    _injector.commit();
   }
 
   Future<void> _initSystemService() async {
-    await _container.get<IReatainService>().init();
-    await _container.get<IErrorLogger>().init();
+    await _injector.get<IReatainService>().init();
+    await _injector.get<IErrorLogger>().init();
 
     for (var task in _periodicTask) {
-      _container.get<MonitoringService>().init(task.$3);
-      await _container.get<RetainHandler>().select(task.$2);
+      _injector.get<MonitoringService>().init(task.$3);
+      await _injector.get<RetainHandler>().select(task.$2);
     }
 
     for (var tasks in _eventTask.values) {
       for (var task in tasks) {
-        _container.get<MonitoringService>().init(task.$3);
-        await _container.get<RetainHandler>().select(task.$2);
+        _injector.get<MonitoringService>().init(task.$3);
+        await _injector.get<RetainHandler>().select(task.$2);
       }
     }
+  }
+
+  ComServer _createComServer() {
+    final tasks = _tasks.keys
+        .map((name) => MapEntry(name, _injector.get(className: name)));
+    // TODO auto_events
+    return ComServer(
+      _eventsForDebug,
+      Map.fromEntries(tasks).cast(),
+      _injector.get<EventQueue>(),
+    );
   }
 
   static List<String> _extractParams(String constructorString) {

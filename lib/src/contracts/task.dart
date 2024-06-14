@@ -8,4 +8,5 @@ abstract class EventTask<T extends Event> {
   void execute(T event);
 }
 
-abstract class Event {}
+abstract class Event {
+}

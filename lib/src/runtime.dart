@@ -7,6 +7,7 @@ import 'package:plcart/src/contracts/task.dart';
 import 'package:plcart/src/helpers/periodic_timer.dart';
 import 'package:plcart/src/runtime_fields/network_handler.dart';
 import 'package:plcart/src/runtime_fields/retain_handler.dart';
+import 'package:plcart/src/system/command_server/com_server.dart';
 import 'package:plcart/src/system/event_queue.dart';
 import 'package:plcart/src/system/monitoring_service.dart';
 
@@ -30,6 +31,7 @@ class Runtime {
   final List<PeriodicTaskWithDep> _periodicTask;
   final Map<String, List<EventTaskWhithDep>> _eventTask;
   final Set<INetworkSubscriber> _networkSubscribers;
+  final ComServer _comServer;
 
   final _timers = <PeriodicTimer>[];
   late final NetworkHandler _networkHandler;
@@ -39,6 +41,7 @@ class Runtime {
     this._eventTask,
     this._periodicTask,
     this._networkSubscribers,
+    this._comServer,
   );
 
   void run() {
@@ -79,6 +82,8 @@ class Runtime {
         }
       }
     });
+
+    _comServer.run();
   }
 
   Future<void> stop() async {
@@ -86,6 +91,7 @@ class Runtime {
       _networkHandler.stop(),
       _injector.get<IReatainService>().close(),
       _injector.get<IErrorLogger>().close(),
+      _comServer.stop(),
     ];
 
     _injector.get<EventQueue>().close();

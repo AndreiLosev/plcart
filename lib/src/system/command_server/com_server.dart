@@ -15,7 +15,7 @@ class ComServer {
 
   ComServer(this._registeredEvents, this._registeredTasks, this._eventQueue);
 
-  Future<void> init() async {
+  Future<void> run() async {
     _serverSocket = await ServerSocket.bind("0.0.0.0", 11223);
 
     _serverSocket.listen((Socket soket) {
