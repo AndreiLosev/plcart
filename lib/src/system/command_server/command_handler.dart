@@ -22,8 +22,19 @@ class CommandHandler {
   ) : _socket = FutureSoket.fromSoket(soket);
 
   Future<void> listen() async {
+    late final int type;
+    late final dynamic payload;
     while (_socket.isConnected()) {
-      final (type, payload) = await readPacket(_socket);
+      try {
+        (type, payload) = await readPacket(_socket);
+      } catch (_) {
+        if (_socket.isConnected()) {
+          continue;
+        } else {
+          break;
+        }
+      }
+
       late final ServerResponse response;
       try {
         response = switch (type.toCommandKind()) {
@@ -115,7 +126,10 @@ class CommandHandler {
     if (!subscriptions.remove(task)) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
-        {'message': "there is no subscription for the task: \"${payload.value}\""},
+        {
+          'message':
+              "there is no subscription for the task: \"${payload.value}\""
+        },
       );
     }
 
