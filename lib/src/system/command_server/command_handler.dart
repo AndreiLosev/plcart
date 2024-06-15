@@ -22,11 +22,15 @@ class CommandHandler {
   ) : _socket = FutureSoket.fromSoket(soket);
 
   Future<void> listen() async {
-    late final int type;
-    late final dynamic payload;
     while (_socket.isConnected()) {
+      late final int type;
+      late final dynamic payload;
+
       try {
         (type, payload) = await readPacket(_socket);
+      } on SocketException {
+        await _socket.disconnect();
+        break;
       } catch (_) {
         if (_socket.isConnected()) {
           continue;
@@ -169,7 +173,11 @@ class CommandHandler {
 
       final packet = ServerResponse.ok(message);
 
-      writePacket(_socket, packet.responseStatus.code(), packet.message);
+      try {
+        writePacket(_socket, packet.responseStatus.code(), packet.message);
+      } on SocketException {
+        _stopNotifications();
+      }
     });
   }
 

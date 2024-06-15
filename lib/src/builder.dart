@@ -214,10 +214,14 @@ class Builder {
   ComServer _createComServer() {
     final tasks = _tasks.keys
         .map((name) => MapEntry(name, _injector.get(className: name)));
+
+    final storages = _storage.keys
+        .map((name) => MapEntry(name, _injector.get(className: name)));
+
     // TODO auto_events
     return ComServer(
       _eventsForDebug,
-      Map.fromEntries(tasks).cast(),
+      Map.fromEntries([...tasks, ...storages]).cast(),
       _injector.get<EventQueue>(),
     );
   }
