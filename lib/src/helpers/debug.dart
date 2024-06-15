@@ -1,9 +1,9 @@
 extension Debug on Object {
-  Map<String, Object> debug() {
+  Map debug() {
     try {
       return (this as dynamic).toMap();
     } on NoSuchMethodError {
-      return {runtimeType.toString(): runtimeType};
+      return {runtimeType.toString(): runtimeType.toString()};
     }
   }
 }

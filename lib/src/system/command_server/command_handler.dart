@@ -31,9 +31,9 @@ class CommandHandler {
           CommandKind.getRegisteredTasks => _getRegisteredTasks(),
           CommandKind.runEvent => _runEvent(RunEventPayload.fromMap(payload)),
           CommandKind.subscribeTask =>
-            _subscribeTask(payload, _timer, _subscriptions),
+            _subscribeTask(SimplePayload(payload), _timer, _subscriptions),
           CommandKind.unsubscribeTask =>
-            _unsubscribeTask(payload, _timer, _subscriptions),
+            _unsubscribeTask(SimplePayload(payload), _timer, _subscriptions),
           CommandKind.setTaskValue =>
             _setTaskValue(SetTaskValuePayload(payload)),
         };
@@ -53,7 +53,7 @@ class CommandHandler {
   }
 
   ServerResponse _getRegisteredTasks() {
-    return ServerResponse.ok({'registeredEvents': _registeredTasks.keys});
+    return ServerResponse.ok({'registeredTasks': _registeredTasks.keys});
   }
 
   ServerResponse _runEvent(RunEventPayload payload) {
@@ -75,20 +75,20 @@ class CommandHandler {
   }
 
   ServerResponse _subscribeTask(
-      String taskName, Timer? t, List<Object> subscriptions) {
-    final task = _registeredTasks[taskName];
+      SimplePayload payload, Timer? t, List<Object> subscriptions) {
+    final task = _registeredTasks[payload.value];
 
     if (task == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
-        {'message': "task \"$taskName\" not found"},
+        {'message': "task \"${payload.value}\" not found"},
       );
     }
 
     if (subscriptions.any((t) => t == task)) {
       return ServerResponse(
         ResponseStatus.alreadySubscribed,
-        {'message': "already subscribed to the task: \"$taskName\""},
+        {'message': "already subscribed to the task: \"$payload.value\""},
       );
     }
 
@@ -102,20 +102,20 @@ class CommandHandler {
   }
 
   ServerResponse _unsubscribeTask(
-      String taskName, Timer? t, List<Object> subscriptions) {
-    final task = _registeredTasks[taskName];
+      SimplePayload payload, Timer? t, List<Object> subscriptions) {
+    final task = _registeredTasks[payload.value];
 
     if (task == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
-        {'message': "task \"$taskName\" not found"},
+        {'message': "task \"${payload.value}\" not found"},
       );
     }
 
     if (!subscriptions.remove(task)) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
-        {'message': "there is no subscription for the task: \"$taskName\""},
+        {'message': "there is no subscription for the task: \"${payload.value}\""},
       );
     }
 
