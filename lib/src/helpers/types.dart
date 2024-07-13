@@ -2,6 +2,13 @@ sealed class Types {
   const Types();
 }
 
+class Boolean extends Types {
+  final dynamic enable;
+  final dynamic disable;
+
+  Boolean(this.enable, this.disable);
+}
+
 class U8 extends Types {
   final bool bigEnding;
   const U8([this.bigEnding = false]);

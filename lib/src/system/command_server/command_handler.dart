@@ -25,9 +25,10 @@ class CommandHandler {
     while (_socket.isConnected()) {
       late final int type;
       late final dynamic payload;
+      late final int id;
 
       try {
-        (type, payload) = await readPacket(_socket);
+        (type, id, payload) = await readPacket(_socket);
       } on SocketException {
         await _socket.disconnect();
         break;
@@ -58,7 +59,12 @@ class CommandHandler {
           {"message": e.toString()},
         );
       } finally {
-        writePacket(_socket, response.responseStatus.code(), response.message);
+        writePacket(
+          _socket,
+          response.responseStatus.code(),
+          id,
+          response.message,
+        );
       }
     }
   }
@@ -174,7 +180,7 @@ class CommandHandler {
       final packet = ServerResponse.ok(message);
 
       try {
-        writePacket(_socket, packet.responseStatus.code(), packet.message);
+        writePacket(_socket, packet.responseStatus.code(), 0, packet.message);
       } on SocketException {
         _stopNotifications();
       }
