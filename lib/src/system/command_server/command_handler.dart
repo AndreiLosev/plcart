@@ -43,15 +43,16 @@ class CommandHandler {
       late final ServerResponse response;
       try {
         response = switch (type.toCommandKind()) {
-          CommandKind.getRegisteredEvents => _getRegisteredEvents(),
-          CommandKind.getRegisteredTasks => _getRegisteredTasks(),
-          CommandKind.runEvent => _runEvent(RunEventPayload.fromMap(payload)),
+          CommandKind.getRegisteredEvents => _getRegisteredEvents(id),
+          CommandKind.getRegisteredTasks => _getRegisteredTasks(id),
+          CommandKind.runEvent =>
+            _runEvent(RunEventPayload.fromMap(payload), id),
           CommandKind.subscribeTask =>
-            _subscribeTask(SimplePayload(payload), _timer, _subscriptions),
-          CommandKind.unsubscribeTask =>
-            _unsubscribeTask(SimplePayload(payload), _timer, _subscriptions),
+            _subscribeTask(SimplePayload(payload), _timer, _subscriptions, id),
+          CommandKind.unsubscribeTask => _unsubscribeTask(
+              SimplePayload(payload), _timer, _subscriptions, id),
           CommandKind.setTaskValue =>
-            _setTaskValue(SetTaskValuePayload(payload)),
+            _setTaskValue(SetTaskValuePayload(payload), id),
         };
       } catch (e) {
         response = ServerResponse(
@@ -69,20 +70,23 @@ class CommandHandler {
     }
   }
 
-  ServerResponse _getRegisteredEvents() {
-    return ServerResponse.ok({'registeredEvents': _registeredEvents.keys});
+  ServerResponse _getRegisteredEvents(int id) {
+    return ServerResponse.ok(
+        message: {'registeredEvents': _registeredEvents.keys}, id: id);
   }
 
-  ServerResponse _getRegisteredTasks() {
-    return ServerResponse.ok({'registeredTasks': _registeredTasks.keys});
+  ServerResponse _getRegisteredTasks(int id) {
+    return ServerResponse.ok(
+        message: {'registeredTasks': _registeredTasks.keys}, id: id);
   }
 
-  ServerResponse _runEvent(RunEventPayload payload) {
+  ServerResponse _runEvent(RunEventPayload payload, int id) {
     final eventContructor = _registeredEvents[payload.eventName];
     if (eventContructor == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
         {'message': "event \"${payload.eventName}\" not found"},
+        id,
       );
     }
 
@@ -92,17 +96,18 @@ class CommandHandler {
       Map.fromEntries(payload.namedArguments.entries
           .map((i) => MapEntry(Symbol(i.key), i.value))),
     ));
-    return ServerResponse.ok();
+    return ServerResponse.ok(id: id);
   }
 
   ServerResponse _subscribeTask(
-      SimplePayload payload, Timer? t, List<Object> subscriptions) {
+      SimplePayload payload, Timer? t, List<Object> subscriptions, int id) {
     final task = _registeredTasks[payload.value];
 
     if (task == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
         {'message': "task \"${payload.value}\" not found"},
+        id,
       );
     }
 
@@ -110,6 +115,7 @@ class CommandHandler {
       return ServerResponse(
         ResponseStatus.alreadySubscribed,
         {'message': "already subscribed to the task: \"$payload.value\""},
+        id,
       );
     }
 
@@ -119,17 +125,18 @@ class CommandHandler {
       _runNotifications();
     }
 
-    return ServerResponse.ok();
+    return ServerResponse.ok(id: id);
   }
 
   ServerResponse _unsubscribeTask(
-      SimplePayload payload, Timer? t, List<Object> subscriptions) {
+      SimplePayload payload, Timer? t, List<Object> subscriptions, int id) {
     final task = _registeredTasks[payload.value];
 
     if (task == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
         {'message': "task \"${payload.value}\" not found"},
+        id,
       );
     }
 
@@ -140,6 +147,7 @@ class CommandHandler {
           'message':
               "there is no subscription for the task: \"${payload.value}\""
         },
+        id,
       );
     }
 
@@ -147,16 +155,17 @@ class CommandHandler {
       _stopNotifications();
     }
 
-    return ServerResponse.ok();
+    return ServerResponse.ok(id: id);
   }
 
-  ServerResponse _setTaskValue(SetTaskValuePayload payload) {
+  ServerResponse _setTaskValue(SetTaskValuePayload payload, int id) {
     final task = _registeredTasks[payload.taskName];
 
     if (task == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
         {'message': "task \"${payload.taskName}\" not found"},
+        id,
       );
     }
 
@@ -167,7 +176,7 @@ class CommandHandler {
       payload.action,
     );
 
-    return ServerResponse.ok();
+    return ServerResponse.ok(id: id);
   }
 
   void _runNotifications() {
@@ -177,7 +186,7 @@ class CommandHandler {
         message[task.runtimeType.toString()] = task.debug();
       }
 
-      final packet = ServerResponse.ok(message);
+      final packet = ServerResponse.ok(message: message);
 
       try {
         writePacket(_socket, packet.responseStatus.code(), 0, packet.message);
