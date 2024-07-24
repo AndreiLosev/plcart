@@ -1,5 +1,5 @@
 abstract class PeriodicTask {
-  Duration get period;
+  Duration get period => const Duration(milliseconds: 100);
   void execute();
 }
 
