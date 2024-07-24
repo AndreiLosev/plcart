@@ -6,3 +6,7 @@ export 'package:plcart/src/contracts/task.dart';
 export 'package:plcart/src/contracts/services.dart';
 export 'package:plcart/src/contracts/property_handlers.dart';
 export 'package:plcart/src/annotations.dart';
+export 'package:plcart/src/std/pid.dart';
+export 'package:plcart/src/std/trigs.dart';
+export 'package:plcart/src/std/timers.dart';
+export 'package:plcart/src/std/bit_map.dart';

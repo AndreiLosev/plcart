@@ -4,7 +4,7 @@ extension BitMap on int {
     return x & 1 == 1;
   }
 
-  int setBit(int pos, bool bit) {
+  int bit(int pos, bool bit) {
     final x = 1 << pos;
     if (bit) {
       return this | x;
