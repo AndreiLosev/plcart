@@ -180,7 +180,7 @@ class CommandHandler {
   }
 
   void _runNotifications() {
-    _timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       final message = {};
       for (var task in _subscriptions) {
         message[task.runtimeType.toString()] = task.debug();
