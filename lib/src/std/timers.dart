@@ -26,6 +26,9 @@ sealed class ITimer {
 }
 
 class TOn extends ITimer {
+
+  TOn({super.pt});
+
   @override
   bool call({required bool in1, Duration? pt}) {
     if (pt != null) {
@@ -60,6 +63,9 @@ class TOn extends ITimer {
 }
 
 class TOf extends ITimer {
+
+  TOf({super.pt});
+
   @override
   bool call({required bool in1, Duration? pt}) {
     if (pt != null) {
@@ -89,6 +95,9 @@ class TOf extends ITimer {
 }
 
 class TP extends ITimer {
+
+  TP({super.pt});
+
   @override
   bool call({required bool in1, Duration? pt}) {
     if (pt != null) {

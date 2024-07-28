@@ -10,4 +10,6 @@ class PublishTask extends EventTask<PublishEvent> {
   void execute(PublishEvent event) {
     _service.publication(event.topic, event.value);
   }
+
+  Map toMap() => {};
 }
