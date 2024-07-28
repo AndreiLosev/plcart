@@ -19,9 +19,9 @@ sealed class ITimer {
 
   Map<String, dynamic> toMap() => {
         'in1': in1,
-        'pt': pt,
+        'pt': pt.toString(),
         'q': _q,
-        'et': _et,
+        'et': _et.toString(),
       };
 }
 
