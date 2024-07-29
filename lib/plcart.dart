@@ -10,3 +10,4 @@ export 'package:plcart/src/std/pid.dart';
 export 'package:plcart/src/std/trigs.dart';
 export 'package:plcart/src/std/timers.dart';
 export 'package:plcart/src/std/bit_map.dart';
+export 'package:plcart/src/helpers/debug.dart';

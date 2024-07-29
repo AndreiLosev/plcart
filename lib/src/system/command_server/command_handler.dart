@@ -169,12 +169,15 @@ class CommandHandler {
       );
     }
 
-    (task as dynamic).setDebugValue(
-      payload.value,
-      payload.index,
-      payload.sIndex,
-      payload.action,
-    );
+    try {
+      (task as dynamic).setDebugValue(payload.params);
+    } catch (e, s) {
+      return ServerResponse(
+        ResponseStatus.setInvalidValueOrKey,
+        {'err': e, 'st': s},
+        id,
+      );
+    }
 
     return ServerResponse.ok(id: id);
   }

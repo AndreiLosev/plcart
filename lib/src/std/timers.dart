@@ -1,3 +1,5 @@
+import 'package:plcart/plcart.dart';
+
 sealed class ITimer {
   final _t = Stopwatch();
   bool in1 = false;
@@ -16,17 +18,27 @@ sealed class ITimer {
   }
 
   bool call({required bool in1, Duration? pt});
-
   Map<String, dynamic> toMap() => {
         'in1': in1,
-        'pt': pt.toString(),
+        'pt': pt.toPlcTimeStr(),
         'q': _q,
-        'et': _et.toString(),
+        'et': et.toPlcTimeStr(),
       };
+
+  void setDebugValue(Map<String, dynamic> params) {
+    switch ((params['name'], params['value'])) {
+      case ('in1', bool()):
+        in1 = params['value'];
+      case ('pt', String()):
+        pt = durationfromString(params['value']);
+      default:
+        throw Exception(
+            "invalid value <${params['value']}> or name <${params['name']}>");
+    }
+  }
 }
 
 class TOn extends ITimer {
-
   TOn({super.pt});
 
   @override
@@ -63,7 +75,6 @@ class TOn extends ITimer {
 }
 
 class TOf extends ITimer {
-
   TOf({super.pt});
 
   @override
@@ -95,7 +106,6 @@ class TOf extends ITimer {
 }
 
 class TP extends ITimer {
-
   TP({super.pt});
 
   @override
