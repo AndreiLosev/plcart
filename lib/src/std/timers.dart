@@ -18,11 +18,16 @@ sealed class ITimer {
   }
 
   bool call({required bool in1, Duration? pt});
-  Map<String, dynamic> toMap() => {
-        'in1': in1,
-        'pt': pt.toPlcTimeStr(),
-        'q': _q,
-        'et': et.toPlcTimeStr(),
+  Object toMap() => {
+        [
+          runtimeType.toString(),
+          {
+            'in1': in1,
+            'pt': pt.toPlcTimeStr(),
+            'q': _q,
+            'et': et.toPlcTimeStr(),
+          },
+        ]
       };
 
   void setDebugValue(Map<String, dynamic> params) {
