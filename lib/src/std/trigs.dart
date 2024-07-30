@@ -6,10 +6,13 @@ sealed class ITrig {
 
   bool call(bool clk);
 
-  Map<String, dynamic> toMap() => {
-        'clk': _mem,
-        'q': _q,
-      };
+  Object toMap() => [
+        runtimeType.toString(),
+        {
+          'clk': _mem,
+          'q': _q,
+        },
+      ];
 }
 
 class RTrig extends ITrig {
