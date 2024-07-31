@@ -11,8 +11,7 @@ class Mqtt311 implements INetworkService {
   final MqttConfig _config;
   late final MqttServerClient _client;
 
-  Mqtt311(Config config)
-      : _config = config.networkCOnfig as MqttConfig {
+  Mqtt311(Config config) : _config = config.networkCOnfig as MqttConfig {
     _client = MqttServerClient.withPort(
       _config.host,
       _config.clientIdentifier,
@@ -41,7 +40,7 @@ class Mqtt311 implements INetworkService {
 
   @override
   Future<void> disconnect() {
-    _client.disconnect();  
+    _client.disconnect();
     return Future.value();
   }
 
