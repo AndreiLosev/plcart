@@ -58,6 +58,10 @@ class TOn extends ITimer {
 
     this.in1 = in1;
 
+    if (!this.in1) {
+      _et = Duration.zero;
+    }
+
     if (_t.isRunning) {
       _et = _t.elapsed;
 
@@ -70,7 +74,6 @@ class TOn extends ITimer {
       if (!this.in1) {
         _t.stop();
         _t.reset();
-        _et = Duration.zero;
       }
     }
 
