@@ -70,6 +70,7 @@ class TOn extends ITimer {
       if (!this.in1) {
         _t.stop();
         _t.reset();
+        _et = Duration.zero;
       }
     }
 
