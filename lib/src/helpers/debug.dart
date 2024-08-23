@@ -24,6 +24,11 @@ Duration durationfromString(String time) {
     if (v is int) {
       res[s] = v;
     }
+
+    time = time.substring(0, m.start);
+    if (time.trim() == "#T") {
+      break;
+    }
   }
 
   return Duration(

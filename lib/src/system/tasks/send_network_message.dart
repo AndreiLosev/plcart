@@ -11,5 +11,5 @@ class PublishTask extends EventTask<PublishEvent> {
     _service.publication(event.topic, event.value);
   }
 
-  Map toMap() => {};
+  Object toMap() => [runtimeType.toString(), {}];
 }
