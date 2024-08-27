@@ -107,7 +107,7 @@ class Pid {
         'setPoint': setPoint,
         'kp': kp,
         'tn': tn,
-        'tc': tv,
+        'tv': tv,
         'yOffset': yOffset,
         'yMin': yMin,
         'yMax': yMax,
@@ -116,4 +116,32 @@ class Pid {
         '_t': _t.elapsed.toPlcTimeStr(),
         'y': _y,
       };
+
+  void setDebugValue(Map<String, dynamic> params) {
+    switch ((params['name'], params['value'])) {
+      case ('setPoint', double()):
+        setPoint = params['value'];
+      case ('kp', double()):
+        kp = params['value'];
+      case ('tn', double()):
+        tn = params['value'];
+      case ('tc', double()):
+        tv = params['value'];
+      case ('yOffset', double()):
+        yOffset = params['value'];
+      case ('yMin', double()):
+        yMin = params['value'];
+      case ('yMax', double()):
+        yMax = params['value'];
+      case ('err', double()):
+        _err = params['value'];
+      case ('iAccum', double()):
+        iAccum = params['value'];
+      case ('y', double()):
+        _y = params['value'];
+      default:
+        throw Exception(
+            "invalid value <${params['value']}> or name <${params['name']}>");
+    }
+  }
 }
