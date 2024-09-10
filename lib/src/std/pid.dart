@@ -121,7 +121,7 @@ class Pid {
     String field,
     String action,
     dynamic value,
-    List<String> keys,
+    Iterable<String> keys,
   ) {
     switch ((field, value)) {
       case ('setPoint', double()):

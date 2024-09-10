@@ -32,7 +32,7 @@ sealed class ITimer {
     String field,
     String action,
     dynamic value,
-    List<String> keys,
+    Iterable<String> keys,
   ) {
     switch ((field, value)) {
       case ('in1', bool()):
