@@ -28,15 +28,19 @@ sealed class ITimer {
         },
       ];
 
-  void setDebugValue(Map<String, dynamic> params) {
-    switch ((params['name'], params['value'])) {
+  void setDebugValue(
+    String field,
+    String action,
+    dynamic value,
+    List<String> keys,
+  ) {
+    switch ((field, value)) {
       case ('in1', bool()):
-        in1 = params['value'];
+        in1 = value;
       case ('pt', String()):
-        pt = durationfromString(params['value']);
+        pt = durationfromString(value);
       default:
-        throw Exception(
-            "invalid value <${params['value']}> or name <${params['name']}>");
+        throw Exception("invalid value <$value> or name <$field>");
     }
   }
 }

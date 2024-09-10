@@ -52,7 +52,7 @@ class CommandHandler {
           CommandKind.unsubscribeTask => _unsubscribeTask(
               SimplePayload(payload), _timer, _subscriptions, id),
           CommandKind.setTaskValue =>
-            _setTaskValue(SetTaskValuePayload(payload), id),
+            _setTaskValue(ForseValue.fromMap(payload), id),
         };
       } catch (e) {
         response = ServerResponse(
@@ -158,19 +158,24 @@ class CommandHandler {
     return ServerResponse.ok(id: id);
   }
 
-  ServerResponse _setTaskValue(SetTaskValuePayload payload, int id) {
-    final task = _registeredTasks[payload.taskName];
+  ServerResponse _setTaskValue(ForseValue payload, int id) {
+    final task = _registeredTasks[payload.task];
 
     if (task == null) {
       return ServerResponse(
         ResponseStatus.taskNotFound,
-        {'message': "task \"${payload.taskName}\" not found"},
+        {'message': "task \"${payload.task}\" not found"},
         id,
       );
     }
 
     try {
-      (task as dynamic).setDebugValue(payload.params);
+      (task as dynamic).setDebugValue(
+        payload.field,
+        payload.action.toString(),
+        payload.value,
+        payload.keys,
+      );
     } catch (e, s) {
       return ServerResponse(
         ResponseStatus.setInvalidValueOrKey,

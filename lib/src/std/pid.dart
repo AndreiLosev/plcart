@@ -117,31 +117,35 @@ class Pid {
         'y': _y,
       };
 
-  void setDebugValue(Map<String, dynamic> params) {
-    switch ((params['name'], params['value'])) {
+  void setDebugValue(
+    String field,
+    String action,
+    dynamic value,
+    List<String> keys,
+  ) {
+    switch ((field, value)) {
       case ('setPoint', double()):
-        setPoint = params['value'];
+        setPoint = value;
       case ('kp', double()):
-        kp = params['value'];
+        kp = value;
       case ('tn', double()):
-        tn = params['value'];
+        tn = value;
       case ('tc', double()):
-        tv = params['value'];
+        tv = value;
       case ('yOffset', double()):
-        yOffset = params['value'];
+        yOffset = value;
       case ('yMin', double()):
-        yMin = params['value'];
+        yMin = value;
       case ('yMax', double()):
-        yMax = params['value'];
+        yMax = value;
       case ('err', double()):
-        _err = params['value'];
+        _err = value;
       case ('iAccum', double()):
-        iAccum = params['value'];
+        iAccum = value;
       case ('y', double()):
-        _y = params['value'];
+        _y = value;
       default:
-        throw Exception(
-            "invalid value <${params['value']}> or name <${params['name']}>");
+        throw Exception("invalid value <$value> or name <$field>");
     }
   }
 }
