@@ -116,7 +116,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: d1ba96ba079c6a1f5ced930e92b70564f45b4ff5
+      resolved-ref: c046164f329ec3f1303fd526ffa7fd1b02be70d4
       url: "git@github.com:AndreiLosev/plcart_debug_server_utils.git"
     source: git
     version: "1.0.0"
