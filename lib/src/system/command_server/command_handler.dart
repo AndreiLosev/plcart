@@ -26,7 +26,6 @@ class CommandHandler {
       late final int type;
       late final dynamic payload;
       late final int id;
-
       try {
         (type, id, payload) = await readPacket(_socket);
       } on SocketException {
@@ -39,7 +38,6 @@ class CommandHandler {
           break;
         }
       }
-
       late final ServerResponse response;
       try {
         response = switch (type.toCommandKind()) {
@@ -60,12 +58,7 @@ class CommandHandler {
           {"message": e.toString()},
         );
       } finally {
-        writePacket(
-          _socket,
-          response.responseStatus.code(),
-          id,
-          response.message,
-        );
+        _write(response, id);
       }
     }
   }
@@ -207,5 +200,19 @@ class CommandHandler {
   void _stopNotifications() {
     _timer?.cancel();
     _timer = null;
+  }
+
+  void _write(ServerResponse response, int id) {
+    try {
+      writePacket(
+          _socket, response.responseStatus.code(), id, response.message);
+    } catch (e) {
+      final errRes = ServerResponse(
+        ResponseStatus.internalError,
+        {"message": e.toString()},
+        id,
+      );
+      writePacket(_socket, errRes.responseStatus.code(), id, errRes.message);
+    }
   }
 }

@@ -31,6 +31,7 @@ class HiveErrorLogService implements IErrorLogger {
         't': DateTime.now().toString()
       });
     } catch (e) {
+      //TODO:
       print("error loger: $e");
     }
     return Future.value();
