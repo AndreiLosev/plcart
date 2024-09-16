@@ -38,6 +38,19 @@ class HiveErrorLogService implements IErrorLogger {
   }
 
   @override
+  Stream<Map<String, String>> watch() {
+    return _box
+        .watch()
+        .where((e) => e.value != null)
+        .map((e) => (e.value as Map).cast<String, String>());
+  }
+
+  @override
+  Future<List<Map>> getAll() {
+    return Future.value(_box.values.toList().cast());
+  }
+
+  @override
   Future<void> close() {
     _box.close();
     return Future.value();

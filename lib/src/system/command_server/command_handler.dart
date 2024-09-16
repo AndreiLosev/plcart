@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:debug_server_utils/debug_server_utils.dart';
 import 'package:future_soket/future_soket.dart';
-import 'package:plcart/src/helpers/debug.dart';
+import 'package:plcart/plcart.dart';
 import 'package:plcart/src/system/event_queue.dart';
 
 class CommandHandler {
@@ -13,13 +13,21 @@ class CommandHandler {
   final Map<String, Object> _registeredTasks;
   final EventQueue _eventQueue;
   final FutureSoket _socket;
+  final IErrorLogger _errorLogger;
 
   CommandHandler(
     Socket soket,
     this._registeredTasks,
     this._registeredEvents,
     this._eventQueue,
-  ) : _socket = FutureSoket.fromSoket(soket);
+    this._errorLogger,
+  ) : _socket = FutureSoket.fromSoket(soket) {
+    _errorLogger.watch().listen((e) {
+      if (_socket.isConnected()) {
+        _write(ServerResponse(ResponseStatus.internalError, e));
+      }
+    });
+  }
 
   Future<void> listen() async {
     while (_socket.isConnected()) {
@@ -51,6 +59,7 @@ class CommandHandler {
               SimplePayload(payload), _timer, _subscriptions, id),
           CommandKind.setTaskValue =>
             _setTaskValue(ForseValue.fromMap(payload), id),
+          CommandKind.getAllErrors => await _getAllErrors(),
         };
       } catch (e) {
         response = ServerResponse(
@@ -180,6 +189,11 @@ class CommandHandler {
     return ServerResponse.ok(id: id);
   }
 
+  Future<ServerResponse> _getAllErrors() async {
+    final err = await _errorLogger.getAll();
+    return ServerResponse(ResponseStatus.ok, {"err": err});
+  }
+
   void _runNotifications() {
     _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       final message = {};
@@ -202,7 +216,7 @@ class CommandHandler {
     _timer = null;
   }
 
-  void _write(ServerResponse response, int id) {
+  void _write(ServerResponse response, [int id = 0]) {
     try {
       writePacket(
           _socket, response.responseStatus.code(), id, response.message);

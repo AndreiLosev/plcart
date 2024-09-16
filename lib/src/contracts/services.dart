@@ -11,6 +11,8 @@ abstract interface class IErrorLogger {
   Future<void> init();
   Future<void> log(Object e, StackTrace s, [bool isFatal = false]);
   Future<void> close();
+  Future<List<Map>> getAll();
+  Stream<Map<String, String>> watch();
 }
 
 abstract interface class INetworkService {

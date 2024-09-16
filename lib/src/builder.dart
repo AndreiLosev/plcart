@@ -223,6 +223,7 @@ class Builder {
       _eventsForDebug,
       Map.fromEntries([...tasks, ...storages]).cast(),
       _injector.get<EventQueue>(),
+      _injector.get<IErrorLogger>(),
     );
   }
 
